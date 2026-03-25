@@ -313,6 +313,8 @@ async def safe_send_photo(context, chat_id, path):
                 await context.bot.send_photo(chat_id, InputFile(f))
         except Exception as e:
             logger.warning(f"Error sending photo: {e}")
+    else:
+        logger.warning(f"Photo not found: {path} | _BASE_DIR={_BASE_DIR} | cwd={os.getcwd()}")
 
 async def type_and_send(context, chat_id, text, delay=0.7, parse_html=False, reply_markup=None):
     try:
