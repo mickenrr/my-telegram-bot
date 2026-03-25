@@ -29,14 +29,15 @@ from telegram.ext import (
 # -------------------------------------------
 TOKEN = "8456104393:AAHDCqq26_uzrhlzaWkMJxyiOLzeDIsMC5o"
 
-PHOTO_1 = "frame1.png"
-PHOTO_2 = "frame2.png"
-PHOTO_3 = "frame3.png"
-PHOTO_4 = "frame4.png"
-PHOTO_5 = "frame5.png"
-PHOTO_6 = "frame6.png"
-PHOTO_7 = "frame7.png"
-PHOTO_8 = "frame8.png"
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PHOTO_1 = os.path.join(_BASE_DIR, "frame1.png")
+PHOTO_2 = os.path.join(_BASE_DIR, "frame2.png")
+PHOTO_3 = os.path.join(_BASE_DIR, "frame3.png")
+PHOTO_4 = os.path.join(_BASE_DIR, "frame4.png")
+PHOTO_5 = os.path.join(_BASE_DIR, "frame5.png")
+PHOTO_6 = os.path.join(_BASE_DIR, "frame6.png")
+PHOTO_7 = os.path.join(_BASE_DIR, "frame7.png")
+PHOTO_8 = os.path.join(_BASE_DIR, "frame8.png")
 
 HABIT_NAMES = {
     "habit_train": "15-минутная тренировка",
