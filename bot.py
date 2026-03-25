@@ -29,15 +29,15 @@ from telegram.ext import (
 # -------------------------------------------
 TOKEN = "8456104393:AAHDCqq26_uzrhlzaWkMJxyiOLzeDIsMC5o"
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PHOTO_1 = os.path.join(_BASE_DIR, "frame1.png")
-PHOTO_2 = os.path.join(_BASE_DIR, "frame2.png")
-PHOTO_3 = os.path.join(_BASE_DIR, "frame3.png")
-PHOTO_4 = os.path.join(_BASE_DIR, "frame4.png")
-PHOTO_5 = os.path.join(_BASE_DIR, "frame5.png")
-PHOTO_6 = os.path.join(_BASE_DIR, "frame6.png")
-PHOTO_7 = os.path.join(_BASE_DIR, "frame7.png")
-PHOTO_8 = os.path.join(_BASE_DIR, "frame8.png")
+_GITHUB_RAW = "https://raw.githubusercontent.com/mickenrr/my-telegram-bot/main"
+PHOTO_1 = f"{_GITHUB_RAW}/frame1.png"
+PHOTO_2 = f"{_GITHUB_RAW}/frame2.png"
+PHOTO_3 = f"{_GITHUB_RAW}/frame3.png"
+PHOTO_4 = f"{_GITHUB_RAW}/frame4.png"
+PHOTO_5 = f"{_GITHUB_RAW}/frame5.png"
+PHOTO_6 = f"{_GITHUB_RAW}/frame6.png"
+PHOTO_7 = f"{_GITHUB_RAW}/frame7.png"
+PHOTO_8 = f"{_GITHUB_RAW}/frame8.png"
 
 HABIT_NAMES = {
     "habit_train": "15-минутная тренировка",
@@ -307,14 +307,10 @@ logger = logging.getLogger(__name__)
 # HELPERS
 # -------------------------------------------
 async def safe_send_photo(context, chat_id, path):
-    if os.path.exists(path):
-        try:
-            with open(path, "rb") as f:
-                await context.bot.send_photo(chat_id, InputFile(f))
-        except Exception as e:
-            logger.warning(f"Error sending photo: {e}")
-    else:
-        logger.warning(f"Photo not found: {path} | _BASE_DIR={_BASE_DIR} | cwd={os.getcwd()}")
+    try:
+        await context.bot.send_photo(chat_id, path)
+    except Exception as e:
+        logger.warning(f"Error sending photo {path}: {e}")
 
 async def type_and_send(context, chat_id, text, delay=0.7, parse_html=False, reply_markup=None):
     try:
@@ -534,12 +530,10 @@ async def reminder_checker(app: Application):
                         # Проверяем, была ли выполнена привычка вчера
                         if yesterday not in completed_dates:
                             # Отправляем фото frame7
-                            if os.path.exists(PHOTO_7):
-                                try:
-                                    with open(PHOTO_7, "rb") as f:
-                                        await app.bot.send_photo(chat_id, InputFile(f))
-                                except Exception as e:
-                                    logger.warning(f"Error sending photo: {e}")
+                            try:
+                                await app.bot.send_photo(chat_id, PHOTO_7)
+                            except Exception as e:
+                                logger.warning(f"Error sending photo {PHOTO_7}: {e}")
 
                             # Имитируем печать
                             try:
