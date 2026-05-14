@@ -150,14 +150,39 @@ async def send_q6(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # ── completion ────────────────────────────────────────────────────────────────
 
+def user_label(user) -> str:
+    """Возвращает строку с именем и юзернеймом клиента."""
+    parts = []
+    full_name = " ".join(filter(None, [user.first_name, user.last_name]))
+    if full_name:
+        parts.append(full_name)
+    if user.username:
+        parts.append(f"@{user.username}")
+    else:
+        parts.append(f"id{user.id}")
+    return " · ".join(parts)
+
+
+def user_link(user) -> str:
+    return user.username or str(user.id)
+
+
+async def forward_to_admin(context: ContextTypes.DEFAULT_TYPE, user, question: str, answer: str) -> None:
+    """Пересылает свободный ответ клиента администратору в реальном времени."""
+    text = (
+        f"✏️ {user_label(user)}\n"
+        f"↳ {question}\n\n"
+        f"{answer}"
+    )
+    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
+
+
 async def send_admin_notification(context: ContextTypes.DEFAULT_TYPE, user, ud: dict) -> None:
     now = datetime.now(MOSCOW)
-    username = f"@{user.username}" if user.username else f"id{user.id}"
-    username_link = user.username or str(user.id)
 
     text = (
         f"🔔 НОВАЯ ЗАЯВКА!\n\n"
-        f"👤 {username}\n"
+        f"👤 {user_label(user)}\n"
         f"📅 {now.strftime('%d.%m.%Y')} в {now.strftime('%H:%M')}\n\n"
         f"1. Проект: {ud.get('tip_proekta', '—')}\n"
         f"2. Задача: {ud.get('zadacha_saita', '—')}\n"
@@ -165,7 +190,7 @@ async def send_admin_notification(context: ContextTypes.DEFAULT_TYPE, user, ud: 
         f"4. Референсы: {ud.get('referensy', '—')}\n"
         f"5. Контент: {ud.get('kontent', '—')}\n"
         f"6. Доп: {ud.get('dopolnitelno', '—')}\n\n"
-        f"✍ Написать: t.me/{username_link}"
+        f"✍ Написать: t.me/{user_link(user)}"
     )
     await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
 
@@ -290,25 +315,30 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     ud = context.user_data
     text = update.message.text.strip()
+    user = update.effective_user
 
     if ud.get(WAITING_TIP):
         ud.pop(WAITING_TIP)
         ud["tip_proekta"] = text
+        await forward_to_admin(context, user, "Тип проекта (свободный ввод)", text)
         await send_q2(update, context)
 
     elif ud.get(WAITING_REF):
         ud.pop(WAITING_REF)
         ud["referensy"] = text
+        await forward_to_admin(context, user, "Референсы", text)
         await send_q5(update, context)
 
     elif ud.get(WAITING_KONTENT):
         ud.pop(WAITING_KONTENT)
         ud["kontent"] = text
+        await forward_to_admin(context, user, "Контент", text)
         await send_q6(update, context)
 
     elif ud.get(WAITING_DOP):
         ud.pop(WAITING_DOP)
         ud["dopolnitelno"] = text
+        await forward_to_admin(context, user, "Доп. пожелания", text)
         await send_final(update, context)
 
     else:
