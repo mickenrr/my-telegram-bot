@@ -151,16 +151,13 @@ async def send_q6(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # ── completion ────────────────────────────────────────────────────────────────
 
 def user_label(user) -> str:
-    """Возвращает строку с именем и юзернеймом клиента."""
-    parts = []
-    full_name = " ".join(filter(None, [user.first_name, user.last_name]))
+    first = user.first_name or ""
+    last = user.last_name or ""
+    full_name = (first + " " + last).strip()
+    username = f"@{user.username}" if user.username else f"id{user.id}"
     if full_name:
-        parts.append(full_name)
-    if user.username:
-        parts.append(f"@{user.username}")
-    else:
-        parts.append(f"id{user.id}")
-    return " · ".join(parts)
+        return f"{full_name} ({username})"
+    return username
 
 
 def user_link(user) -> str:
@@ -168,31 +165,43 @@ def user_link(user) -> str:
 
 
 async def forward_to_admin(context: ContextTypes.DEFAULT_TYPE, user, question: str, answer: str) -> None:
-    """Пересылает свободный ответ клиента администратору в реальном времени."""
-    text = (
-        f"✏️ {user_label(user)}\n"
-        f"↳ {question}\n\n"
-        f"{answer}"
-    )
-    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
+    try:
+        text = (
+            f"[{question}]\n"
+            f"От: {user_label(user)}\n\n"
+            f"{answer}"
+        )
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
+    except Exception as e:
+        logger.error(f"forward_to_admin error: {e}")
 
 
 async def send_admin_notification(context: ContextTypes.DEFAULT_TYPE, user, ud: dict) -> None:
-    now = datetime.now(MOSCOW)
-
-    text = (
-        f"🔔 НОВАЯ ЗАЯВКА!\n\n"
-        f"👤 {user_label(user)}\n"
-        f"📅 {now.strftime('%d.%m.%Y')} в {now.strftime('%H:%M')}\n\n"
-        f"1. Проект: {ud.get('tip_proekta', '—')}\n"
-        f"2. Задача: {ud.get('zadacha_saita', '—')}\n"
-        f"3. Объём: {ud.get('obem', '—')}\n"
-        f"4. Референсы: {ud.get('referensy', '—')}\n"
-        f"5. Контент: {ud.get('kontent', '—')}\n"
-        f"6. Доп: {ud.get('dopolnitelno', '—')}\n\n"
-        f"✍ Написать: t.me/{user_link(user)}"
-    )
-    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
+    try:
+        now = datetime.now(MOSCOW)
+        lines = [
+            "🔔 НОВАЯ ЗАЯВКА!\n",
+            f"Клиент: {user_label(user)}",
+            f"Дата: {now.strftime('%d.%m.%Y')} в {now.strftime('%H:%M')}\n",
+            f"1. Проект: {ud.get('tip_proekta', '—')}",
+            f"2. Задача: {ud.get('zadacha_saita', '—')}",
+            f"3. Объём: {ud.get('obem', '—')}",
+            f"4. Референсы: {ud.get('referensy', '—')}",
+            f"5. Контент: {ud.get('kontent', '—')}",
+            f"6. Доп: {ud.get('dopolnitelno', '—')}\n",
+            f"Написать: t.me/{user_link(user)}",
+        ]
+        text = "\n".join(lines)
+        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=text)
+    except Exception as e:
+        logger.error(f"send_admin_notification error: {e}")
+        try:
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"Новая заявка от {user_label(user)} — ошибка при формировании сообщения: {e}",
+            )
+        except Exception:
+            pass
 
 
 async def send_final(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
